@@ -1,0 +1,48 @@
+org: gautammd
+app: devops-test-serverless
+service: devops-test-serverless
+
+frameworkVersion: '2 || 3'
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+
+provider:
+  name: aws
+  runtime: python3.8
+  lambdaHashingVersion: 20201221
+  iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "s3:*"
+        Resource:
+          - { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ]]}
+          - "arn:aws:s3:::data-engineer-test-upwork/*"
+
+
+functions:
+  processupload:
+    handler: handler.process_upload
+    events:
+      - s3:
+          bucket: data-engineer-test-upwork
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: uploads/
+          existing: true
+  
+  transformdata:
+    handler: handler.transform_data
+    provisionedConcurrency: 3
+    reservedConcurrency: 5
+    timeout: 30
+    events:
+      - s3:
+          bucket: data-engineer-test-upwork
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: data/input/raw/
+          existing: true
