@@ -21,6 +21,18 @@ provider:
         Resource:
           - { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ]]}
           - "arn:aws:s3:::data-engineer-test-upwork/*"
+      - Effect: Allow
+        Action:
+          - rds:*
+        Resource:
+          - "*"
+  environment:
+    dbname: devopstest
+    user: postgres
+    host: database-1.cluster-cl38nfa4p8ja.us-west-1.rds.amazonaws.com
+    pass: letmein123
+    port: 5432
+
 
 
 functions:
@@ -38,7 +50,7 @@ functions:
     handler: handler.transform_data
     provisionedConcurrency: 3
     reservedConcurrency: 5
-    timeout: 30
+    timeout: 300
     events:
       - s3:
           bucket: data-engineer-test-upwork

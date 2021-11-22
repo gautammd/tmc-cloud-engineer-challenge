@@ -5,6 +5,8 @@ from datetime import datetime
 import pandas as pd
 import time
 from io import StringIO
+import os
+import sqlalchemy
 
 def process_upload(event, context):
     bucket = event['Records'][0]['s3']['bucket']['name']
@@ -69,6 +71,20 @@ def transform_data(event, context):
     csv_data = df.to_csv(index=False)
     s3.put_object(Bucket=bucket, Key=f'data/output/raw/pace-data-{int(time.time())}.csv', Body=csv_data)
     print('Transformed data written to csv file')
+
+    #connect to postgres database
+    print('Connecting to postgres database')
+    db_url = f"postgresql://{os.environ.get('user')}:{os.environ.get('pass')}@{os.environ.get('host')}/{os.environ.get('dbname')}"
+    engine = sqlalchemy.create_engine(db_url)
+    print('Connected to postgres database')
+
+    # create a new table in the database with the transformed data
+    print('Creating new table in postgres database')
+    table_name = f'pace_data_{int(time.time())}'
+    print(f"Table Name: {table_name}")
+    df.to_sql(table_name, engine)
+    print('New table created in postgres database')
+
 
 
 
