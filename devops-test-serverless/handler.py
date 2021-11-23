@@ -85,6 +85,53 @@ def transform_data(event, context):
     df.to_sql(table_name, engine)
     print('New table created in postgres database')
 
+def get_data(event, context):
+    # print parameters from request
+    callsign =  event["queryStringParameters"].get("callsign", "5BUU3")  
+
+    # connect to postgres database
+    print('Connecting to postgres database')
+    db_url = f"postgresql://{os.environ.get('user')}:{os.environ.get('pass')}@{os.environ.get('host')}/{os.environ.get('dbname')}"
+    engine = sqlalchemy.create_engine(db_url)
+    print('Connected to postgres database')
+
+    # get list of tables in database
+    print('Getting list of tables in database')
+    tables = engine.table_names()
+
+    # get only timestamp from tables
+    print('Getting only timestamp from tables')
+    table_timestamps = [float(table.split('pace_data_')[1]) for table in tables]
+
+    # get latest timestamp from table_timestamps
+    print('Getting latest timestamp from table_timestamps')
+    latest_timestamp = max(table_timestamps)
+
+    # get data from the table with the latest timestamp
+    print('Getting data from the table with the latest timestamp')
+    table_name = f'pace_data_{int(latest_timestamp)}'
+
+    # get data from the table where CallSign = callsign
+    print('Getting all data from the table where CallSign = callsign')
+    df = pd.read_sql(f"SELECT * FROM {table_name} WHERE \"CallSign\" like '%%{callsign}%%'", engine)
+    # convert data to json
+    print('Converting data to json')
+    data = df.to_json(orient='records')
+    print('Data converted to json')
+
+    # return json data
+    print('Returning json data')
+
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers" : "*",
+            "Access-Control-Allow-Methods": "GET"
+        },
+        "body": json.dumps(data)
+    }
 
 
 

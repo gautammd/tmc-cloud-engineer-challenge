@@ -26,6 +26,11 @@ provider:
           - rds:*
         Resource:
           - "*"
+      - Effect: Allow
+        Action:
+          - ApiGatewayV2:*
+        Resource:
+          - "*"
   environment:
     dbname: devopstest
     user: postgres
@@ -58,3 +63,19 @@ functions:
           rules:
             - prefix: data/input/raw/
           existing: true
+  
+  getData:
+    handler: handler.get_data
+    events:
+      - httpApi:
+          path: /getdata
+          method: GET
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+            allowCredentials: false

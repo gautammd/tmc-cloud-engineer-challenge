@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/fontawesome.min.css" rel="stylesheet" crossorigin="anonymous">
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+        <script src="https://cdn.jsdelivr.net/npm/notiflix@3.2.2/dist/notiflix-aio-3.2.2.min.js" integrity="sha256-o13sz6XaTzKRUTQ6rYTgXSdIhhEKizCTrS4Jka0758g=" crossorigin="anonymous"></script>
+
+        <style>
+        body {
+                padding: 10px;
+            }
+            #map {
+                width: 750px;
+                height: 650px;
+                overflow: unset;
+            }
+
+            .center-div {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+        </style>
+    </head>
+    <body>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+        <div class="center-div" style="margin-top:100px; padding-bottom:100px;">
+            
+            <h1> Ship Tracker 🚢</h1>
+
+            <select class="form-select" id="shipsDropdown" aria-label="Default select example" style="margin-top:10px; margin-bottom:10px;">
+                <option value="5BUU3" selected>5BUU3</option>
+                <option value="V7KK3">V7KK3</option>
+                <option value="D5TY7">D5TY7</option>
+                <option value="A8OL2">A8OL2</option>
+                <option value="5BVY3">5BVY3</option>
+                <option value="9HBV9">9HBV9</option>
+                <option value="V7U14">V7U14</option>
+                <option value="BTUA2">BTUA2</option>
+                <option value="V7YZ9">V7YZ9</option>
+                <option value="9V3787">9V3787</option>
+                <option value="VRDF2">VRDF2</option>
+                <option value="3EYP9">3EYP9</option>
+            </select>
+
+
+            <div id="map"></div>
+
+        <!-- ... -->
+        </div>
+
+    
+     <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCCcZpd2dpgSz-PyL84XQvwsV4WjwjF0rU&callback=initMap&v=weekly&channel=2"
+      async
+    ></script>
+
+
+    <script>
+    var geocoder;
+    var map;
+
+    var marker;
+
+    async function initMap() {
+
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: -34.397, lng: 150.644 },
+            zoom: 8,
+        });
+
+        var rendererOptions = { map: map };
+	directionsDisplay = new google.maps.DirectionsRenderer(rendererOptions);
+
+    Notiflix.Loading.pulse();
+
+    var shipdropdown = document.getElementById("shipsDropdown");
+    var shipdropdown_selected = shipdropdown.options[shipdropdown.selectedIndex].value;
+
+    const data = await getShipLocationData(shipdropdown_selected);
+    json_data = JSON.parse(data);
+    console.log(json_data);
+
+    // loop through json_data and create array of coordinates
+    var coordinates = [];
+    for (var i = 0; i < json_data.length; i++) {
+        coordinates.push({"lat": json_data[i].Latitude, "lng": json_data[i].Longitude});
+    }
+
+    const shipPath = new google.maps.Polyline({
+        path: coordinates,
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+    });
+
+    shipPath.setMap(map);
+
+    // add all points as markers to map
+    for (var i = 0; i < json_data.length; i++) {
+        marker = new google.maps.Marker({
+            position: new google.maps.LatLng(json_data[i].Latitude, json_data[i].Longitude),
+            map: map,
+            title: 'Ship Location'
+        });
+        console.log(`added: ${json_data[i].Latitude}`);
+    }
+
+    map.setCenter({lat: json_data[0].Latitude, lng: json_data[0].Latitude});
+    map.setZoom(1);
+    Notiflix.Loading.remove(1923);
+    }
+
+    async function getShipLocationData(shipId) {
+        const response = await fetch(`https://5f9tpgnis5.execute-api.us-east-1.amazonaws.com/getdata?callsign=${shipId}`);
+        console.log(response);
+        const data = await response.json();
+        return data;
+    }
+
+    document.getElementById('shipsDropdown').onchange = function () {
+        initMap();
+    };
+
+
+    /* (async () => {
+        const data = await getShipLocationData("5BUU3");
+        console.log(data);
+    })(); */
+    
+    </script>
+    </body>
+</html>
