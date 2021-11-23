@@ -20,3 +20,6 @@ How to use it -
 6. run ./script.sh <path-to-pace-data.txt or url> <output-file-name> 
     - to trigger the lambda functions
 7. open webapp/index.html
+
+
+Demo - https://gautammd.github.io/tmc-cloud-engineer-challenge/webapp/index.html
